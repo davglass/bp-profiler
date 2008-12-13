@@ -1,6 +1,35 @@
 This project's goal is to create a BrowserPlus[1] plugin to profile Javascript.
 
-More info coming when available.
+Service Description:
+
+A service that analyzes the memory and cpu usage of a web browser. The service can take 1 sample or multiple samples at a specified
+interval. When sampling at intervals, at most 1,000 samples are taken. If you provide a callback function, your javascript will be called
+after every sample is taken. If no callback is provided, all samples are stored in an array and returned after start() completes or stop()
+is called.
+
+The sample object is a map with the following keys (most values are floats):
+
+* [sample] - the sample number (1-1,000)
+* [time]   - the string representation of the time the sample was taken
+* [sys]    - the percentage CPU "sys" processes are using
+* [user]   - the percentage CPU "user" processes are using
+* [ffxcpu] - the percentage CPU Firefox is using, or -1.0 if it is not running
+* [ffxmem] - the amout of memory Firefox is using, or -1.0 if it is not running
+* [safcpu] - the percentage CPU Safari is using, or -1.0 if it is not running
+* [safmem] - the amout of memory Safari is using, or -1.0 if it is not running
+
+
+Sample of data:
+------------------------------------------------------------
+Sample #      : 70
+Time          : Sat Dec 13 00:36:45 -0800 2008
+System CPU    : 4
+User CPU      : 7
+Firefox CPU   : 0
+Firefox Memory: 78413800
+Safari CPU    : 2.8
+Safari Memory : 32768000
+------------------------------------------------------------
 
 
 [1] http://developer.yahoo.com/browserplus
