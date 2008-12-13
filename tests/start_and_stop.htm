@@ -1,6 +1,6 @@
 <html>  
 <head>
-    <title>Using BrowserPlus Services</title>
+    <title>BrowserPlus Profiler Services: Start and Stop</title>
     <style type="text/css" media="screen">
         #result {border:1px solid #999; background:#ccc; font-size:8pt;padding:5px;}
     </style>
@@ -15,9 +15,13 @@
 
     <pre id="result">Samples displayed here...</pre>
 
+    <input id="bstart" type="button" value="Start Profiling">
+    <input id="bstop"  type="button" value="Stop Profiling">
+
     <script type="text/javascript" src="http://bp.yahooapis.com/2.1.11/browserplus-min.js"></script>  
     <script type="text/javascript">  
-
+    var GoodToGo = false;
+    
     var dbg = function(s) {
         var el = document.getElementById("result");
         el.innerHTML = s;
@@ -58,7 +62,8 @@
         if (res.success) {  
             BrowserPlus.require({ services: [ {service: "BrowserProfiler", version: "0", minversion: "0.0.5"} ]}, function(r) {
                 if (r.success) {  
-                    BrowserPlus.BrowserProfiler.start({ callback: mycb, interval: 1.0 }, function(x){});
+                    GoodToGo = true;
+
                 } else {
                     err("REQUIRE", r);
                 }
@@ -67,6 +72,24 @@
             err("INIT", res);
         }
     });
+
+
+    document.getElementById('bstart').onclick=function(e) {
+        if (GoodToGo) {
+            dbg("Starting...");
+            BrowserPlus.BrowserProfiler.start({ callback: mycb, interval: 1.0 }, function(x){});
+        }
+    };
+
+    document.getElementById('bstop').onclick=function(e) {
+        if (GoodToGo) {
+            BrowserPlus.BrowserProfiler.stop({}, function(x){
+                if (x.success) {
+                    dbg("STOPPED!");
+                }
+            });
+        }
+    };
     </script>  
 </body>  
 </html>
