@@ -34,17 +34,17 @@ YUI().use('dd-drag', function(Y) {
         dd.on('drag:start', function() {
             BrowserPlus.BrowserProfiler.start({
                 interval: 0.1,
-                callback: function(v) {
-                    Y.get('#cpuUsage').set('innerHTML', v.ffxcpu);
-                    Y.get('#residentMem').set('innerHTML', v.ffxmem);
+                callback: function(data) {
+                    console.log(arguments);
+                    Y.get('#cpuUsage').set('innerHTML', data.ffxcpu);
+                    Y.get('#residentMem').set('innerHTML', data.ffxmem);
                 }
             }, function() {});
         });
         dd.on('drag:end', function() {
-            BrowserPlus.BrowserProfiler.stop({}, function(){});
+            BrowserPlus.BrowserProfiler.stop({}, function(x) {});
             Y.get('#cpuUsage').set('innerHTML', '--');
             Y.get('#residentMem').set('innerHTML', '--');
-
         });
     };
 
