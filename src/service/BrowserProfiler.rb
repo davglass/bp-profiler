@@ -8,10 +8,11 @@ class BrowserProfiler
 
   # Constructor
   def initialize(args)
-    @takingSamples = true
+    @takingSamples = false
     @sampleList = []
     @maxSamples = 0
     @sampleNumber = 0
+    @startTime = Time.now
   end
 
   #
@@ -20,11 +21,18 @@ class BrowserProfiler
   # or 1,000 samples are taken.
   #
   def start(bp, args)
+
+    if @takingSamples == true
+      bp.error("alreadyStarted", "you tried to start another sampling process, but we're already sampling")
+      return
+    end
+
     interval = args['interval'] || 1.0
     if (interval < 0.1)
       interval = 0.1
     end
 
+    @startTime = Time.now
     @takingSamples = true
     @maxSamples = @@MAX_SAMPLES
     @sampleList = []
@@ -89,7 +97,7 @@ class BrowserProfiler
   def _get_sample
     # problem passing this thru to javascript as a float
     #stime = Time.now.to_f
-    stime = Time.now.to_s
+    time = (Time.now - @startTime).to_f
     
     x = `iostat -n 0 | tail -1`
     x = x.scan(/\d+/)
@@ -104,7 +112,7 @@ class BrowserProfiler
     scpu = x[0]
     smem = x[1]
 
-    return {'sample' => @sampleNumber, 'time' => stime, 'ffxcpu' => fcpu, 'ffxmem' =>  fmem, 'safcpu' => scpu, 'safmem' => smem, 'sys'=>sys, 'user'=>user}
+    return {'sample' => @sampleNumber, 'time' => time, 'ffxcpu' => fcpu, 'ffxmem' =>  fmem, 'safcpu' => scpu, 'safmem' => smem, 'sys'=>sys, 'user'=>user}
 
   end
 end
@@ -114,7 +122,7 @@ rubyCoreletDefinition = {
   'name'  => "BrowserProfiler",
   'major_version' => 0,
   'minor_version' => 0,
-  'micro_version' => 3,
+  'micro_version' => 5,
   'documentation' => 
     'A service that analyzes the memory and cpu usage of a web browser.  ' +
     'The service can take 1 sample or multiple samples at a specified interval.  ' +
@@ -124,7 +132,7 @@ rubyCoreletDefinition = {
     'completes or stop() is called.\n' + 
     'The sample object is a map with the following keys (most values are floats):\n' +
     '[sample] - the sample number (1-1,000)\n' + 
-    '[time]   - the string representation of the time the sample was taken\n' + 
+    '[time]   - the offset time in seconds of when the sample was taken\n' + 
     '[sys]    - the percentage CPU "sys" processes are using\n' + 
     '[user]   - the percentage CPU "user" processes are using\n' + 
     '[ffxcpu] - the percentage CPU Firefox is using, or -1.0 if it is not running\n' +

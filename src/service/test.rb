@@ -34,11 +34,11 @@ end
 bp = BPProxy.new
 profiler = BrowserProfiler.new([])
 
-if true
+if false
   profiler.sample(bp, [])
 else
   invoker = Invoker.new
-  profiler.start(bp, {'callback'=>invoker, 'interval'=>0.25})
+  profiler.start(bp, {'callback'=>invoker, 'interval'=>0.5})
   sleep 3
   profiler.stop(bp, [])
   sleep 1
