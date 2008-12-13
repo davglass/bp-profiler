@@ -34,7 +34,7 @@ rubyCoreletDefinition = {
   'name' => "BrowserProfiler",
   'major_version' => 0,
   'minor_version' => 0,
-  'micro_version' => 1,
+  'micro_version' => 2,
   'documentation' => 'A service that analyzes the memory and cpu usage of a webbrowser.',
   'functions' =>
   [
