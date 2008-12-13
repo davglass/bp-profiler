@@ -1,0 +1,72 @@
+<html>  
+<head>
+    <title>Using BrowserPlus Services</title>
+    <style type="text/css" media="screen">
+        #result {border:1px solid #999; background:#ccc; font-size:8pt;padding:5px;}
+    </style>
+</head>  
+<body>  
+
+    <p>
+        The BrowserProfiler service returns the CPU and Memory usage of Firefox and Safari, and the System and User
+        CPU time.  This only runs on Mac Intel / OS X and requires <a href="http://browserplus.yahoo.com">BrowserPlus</a>
+        from Yahoo!  The box below shows 1,000 samples and then stops.
+    </p>
+
+    <pre id="result">Samples displayed here...</pre>
+
+    <script type="text/javascript" src="http://bp.yahooapis.com/2.1.11/browserplus-min.js"></script>  
+    <script type="text/javascript">  
+
+    var dbg = function(s) {
+        var el = document.getElementById("result");
+        el.innerHTML = s;
+    };
+
+    var formatSample = function(params) {
+        var map = {
+            sample: "Sample #      ",
+            time:   "Time          ",
+            sys:    "System CPU    ",
+            user:   "User CPU      ",
+            ffxcpu: "Firefox CPU   ",
+            ffxmem: "Firefox Memory",
+            safcpu: "Safari CPU    ",
+            safmem: "Safari Memory "
+        };
+
+        var arr = [];
+
+        for (var k in map) {
+            if (map.hasOwnProperty(k)) {
+                arr.push(map[k] + ": " + params[k]);
+            }
+        }
+
+        return arr.join("\n");
+    };
+    
+    var mycb = function(r) {
+        dbg(formatSample(r));
+    };
+
+    var err = function(f, result) {
+        dbg(f + " Error: " + result.error + (result.verboseError ? (": " + result.verboseError) : ""));
+    };
+
+    BrowserPlus.init(function(res) {  
+        if (res.success) {  
+            BrowserPlus.require({ services: [ {service: "BrowserProfiler", version: "0", minversion: "0.0.5"} ]}, function(r) {
+                if (r.success) {  
+                    BrowserPlus.BrowserProfiler.start({ callback: mycb, interval: 1.0 }, function(x){});
+                } else {
+                    err("REQUIRE", r);
+                }
+            });
+        } else {
+            err("INIT", res);
+        }
+    });
+    </script>  
+</body>  
+</html>
