@@ -2,5 +2,11 @@ This project's goal is to create a BrowserPlus[1] plugin to profile Javascript.
 
 More info coming when available.
 
+Right now it's a hack, no, a kludge that's brittle, ugly and smells bad.
+It's osx/ffx only.
+
+How to get the service installed see the README.txt in:
+src/service/README.txt
+
 
 [1] http://developer.yahoo.com/browserplus
