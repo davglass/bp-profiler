@@ -22,34 +22,27 @@
 
     <div id="demo">Drag Me</div>
 
-<script class="javascript" src="http://bp.yahooapis.com/2.1.11/browserplus-min.js"></script>
+<script class="javascript" src="http://bp.yahooapis.com/2.1.11/browserplus.js"></script>
 <script type="text/javascript" src="http://yui.yahooapis.com/combo?3.0.0pr2/build/yui/yui-min.js&3.0.0pr2/build/oop/oop-min.js&3.0.0pr2/build/event/event-min.js&3.0.0pr2/build/dom/dom-min.js&3.0.0pr2/build/node/node-min.js&3.0.0pr2/build/attribute/attribute-min.js&3.0.0pr2/build/base/base-min.js&3.0.0pr2/build/dd/dd-ddm-base-min.js&3.0.0pr2/build/dd/dd-ddm-min.js&3.0.0pr2/build/dd/dd-drag-min.js&3.0.0pr2/build/dd/dd-proxy-min.js"></script>
 <script>
 YUI().use('dd-drag', function(Y) {
  
-    var profile = function() {
-        BrowserPlus.BrowserProfiler.GetUsage({},
-          function(r) {
-            if (r.success) {
-                Y.get('#cpuUsage').set('innerHTML', r.value[0]);
-                Y.get('#residentMem').set('innerHTML', r.value[1]);
-            }
-          });
-    };
-
     var setupDD = function() {
         var dd = new Y.DD.Drag({
             node: '#demo'
         });
         dd.on('drag:start', function() {
-            handle = Y.later(100, this, profile, [], true);
+            BrowserPlus.BrowserProfiler.start({
+                interval: 0.1,
+                callback: function() {
+                    console.log(arguments);
+                    //Y.get('#cpuUsage').set('innerHTML', r.value[0]);
+                    //Y.get('#residentMem').set('innerHTML', r.value[1]);
+                }
+            }, function(x) {});
         });
         dd.on('drag:end', function() {
-            if (handle) {
-                handle.cancel();
-                Y.get('#cpuUsage').set('innerHTML', '--');
-                Y.get('#residentMem').set('innerHTML', '--');
-            }
+            BrowserPlus.BrowserProfiler.stop();
         });
     };
 
@@ -59,7 +52,9 @@ YUI().use('dd-drag', function(Y) {
             BrowserPlus.require({
                 services: [
                 {
-                    service: "BrowserProfiler"
+                    service: "BrowserProfiler",
+                    version: "0",
+                    minversion: "0.0.2"
                 }
             ]}, function(r) {
             if (!r.success) {
