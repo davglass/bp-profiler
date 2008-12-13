@@ -1,0 +1,16 @@
+{
+	"type": "dependent",
+	"uses": {
+		"corelet": "RubyInterpreter",
+		"version": "4"
+	},
+	"arguments": {
+	  "ScriptFile": "BrowserProfiler.rb"
+	},
+    "strings": {
+        "en": {
+            "title": "Browser Profiler",
+            "summary": "A service to analyze the resource usage of your web browser.  Useful for debugging slow pages."
+        }
+    }
+}
