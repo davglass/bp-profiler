@@ -39,7 +39,7 @@ YUI().use('dd-drag', function(Y) {
                     //Y.get('#cpuUsage').set('innerHTML', r.value[0]);
                     //Y.get('#residentMem').set('innerHTML', r.value[1]);
                 }
-            }, function(x) {});
+            }, function() {});
         });
         dd.on('drag:end', function() {
             BrowserPlus.BrowserProfiler.stop();

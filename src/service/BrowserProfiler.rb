@@ -1,9 +1,15 @@
 class BrowserProfiler
   def initialize(args)
-    @takingSamples = true
+    @takingSamples = false
   end
   
   def start(bp, args)
+    if @takingSamples == true
+      bp.error("alreadyStarted",
+               "you tried to start another sampling process, but we're" +
+               " already sampling")
+      return
+    end
 
     if (args['interval'] < 0.1)
       args['interval'] = 0.1
@@ -11,11 +17,17 @@ class BrowserProfiler
     
     @takingSamples = true
     Thread.new(bp, args['callback'], args['interval']) do |bp,callback,interval |
+      startTime = Time.now
+
       while @takingSamples
         x = `ps -ocomm,pcpu,rss -xwwc | grep firefox-bin | head -1`
         cpu = /\d+\.\d+/.match(x)[0]
         rss = /\d+$/.match(x)[0]
-        callback.invoke({'cpu' => Float(cpu), 'memory' => Integer(rss) * 1024})
+        callback.invoke({
+                          'cpu' => Float(cpu),
+                          'memory' => Integer(rss) * 1024,
+                          'offset' => (Time.now - startTime).to_f
+                        })
         sleep interval
       end
       bp.complete()
@@ -34,7 +46,7 @@ rubyCoreletDefinition = {
   'name' => "BrowserProfiler",
   'major_version' => 0,
   'minor_version' => 0,
-  'micro_version' => 2,
+  'micro_version' => 4,
   'documentation' => 'A service that analyzes the memory and cpu usage of a webbrowser.',
   'functions' =>
   [
