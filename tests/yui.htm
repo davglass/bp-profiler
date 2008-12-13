@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>browser profiler test</title>
+    <style>
+    #demo {
+        height: 50px;
+        width: 50px;
+        border: 1px solid black;
+        background-color: #ccc;
+        cursor: move;
+    }
+    </style>
+</head>
+<body>
+  <h2>browser profiler test</h2>
+
+  current cpu usage of firefox: <div id="cpuUsage">--</div>
+
+  current resident mem of firefox: <div id="residentMem">--</div>
+
+    <div id="demo">Drag Me</div>
+
+<script class="javascript" src="http://bp.yahooapis.com/2.1.11/browserplus-min.js"></script>
+<script type="text/javascript" src="http://yui.yahooapis.com/combo?3.0.0pr2/build/yui/yui-min.js&3.0.0pr2/build/oop/oop-min.js&3.0.0pr2/build/event/event-min.js&3.0.0pr2/build/dom/dom-min.js&3.0.0pr2/build/node/node-min.js&3.0.0pr2/build/attribute/attribute-min.js&3.0.0pr2/build/base/base-min.js&3.0.0pr2/build/dd/dd-ddm-base-min.js&3.0.0pr2/build/dd/dd-ddm-min.js&3.0.0pr2/build/dd/dd-drag-min.js&3.0.0pr2/build/dd/dd-proxy-min.js"></script>
+<script>
+YUI().use('dd-drag', function(Y) {
+ 
+    var profile = function() {
+        BrowserPlus.BrowserProfiler.GetUsage({},
+          function(r) {
+            if (r.success) {
+                Y.get('#cpuUsage').set('innerHTML', r.value[0]);
+                Y.get('#residentMem').set('innerHTML', r.value[1]);
+            }
+          });
+    };
+
+    var setupDD = function() {
+        var dd = new Y.DD.Drag({
+            node: '#demo'
+        });
+        dd.on('drag:start', function() {
+            handle = Y.later(100, this, profile, [], true);
+        });
+        dd.on('drag:end', function() {
+            if (handle) {
+                handle.cancel();
+                Y.get('#cpuUsage').set('innerHTML', '--');
+                Y.get('#residentMem').set('innerHTML', '--');
+            }
+        });
+    };
+
+
+    BrowserPlus.init({}, function(r) {
+        if (r.success) {
+            BrowserPlus.require({
+                services: [
+                {
+                    service: "BrowserProfiler"
+                }
+            ]}, function(r) {
+            if (!r.success) {
+                alert("couldn't require BrowserProfiler, did you install it?");
+            } else {
+              setupDD();
+            } 
+          });
+        }
+    });
+
+});
+</script>
+</body>
+</html>
+
