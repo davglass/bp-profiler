@@ -34,15 +34,15 @@ YUI().use('dd-drag', function(Y) {
         dd.on('drag:start', function() {
             BrowserPlus.BrowserProfiler.start({
                 interval: 0.1,
-                callback: function() {
+                callback: function(data) {
                     console.log(arguments);
-                    //Y.get('#cpuUsage').set('innerHTML', r.value[0]);
-                    //Y.get('#residentMem').set('innerHTML', r.value[1]);
+                    Y.get('#cpuUsage').set('innerHTML', data.ffxcpu);
+                    Y.get('#residentMem').set('innerHTML', data.ffxmem);
                 }
             }, function(x) {});
         });
         dd.on('drag:end', function() {
-            BrowserPlus.BrowserProfiler.stop();
+            BrowserPlus.BrowserProfiler.stop({}, function(x) {});
         });
     };
 
@@ -54,7 +54,7 @@ YUI().use('dd-drag', function(Y) {
                 {
                     service: "BrowserProfiler",
                     version: "0",
-                    minversion: "0.0.2"
+                    minversion: "0.0.5"
                 }
             ]}, function(r) {
             if (!r.success) {
