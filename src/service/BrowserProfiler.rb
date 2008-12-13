@@ -2,7 +2,6 @@ class BrowserProfiler
   # at the time the first function is invoked on the service, initialize
   # will be called.  Arguments will 
   def initialize(args)
-    log("init called with #{args.pretty_inspect}")
   end
   
   def GetUsage(bp, args)
