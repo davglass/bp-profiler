@@ -12,6 +12,6 @@ How to get the service installed:
 2. install ruby interpreter service (by say, running the Json demo or
    using the service explorer)
 3. copy the BrowserProfiler service into
-  ~/Library/Application\ Support/Yahoo\!/BrowserPlus/Corelets/BrowserProfiler/0.0.2/
+  ~/Library/Application\ Support/Yahoo\!/BrowserPlus/Corelets/BrowserProfiler/0.0.5/
 4. restart browserplus (can do it from system preferences -> BrowserPlus)
 5. open test service_test.htm

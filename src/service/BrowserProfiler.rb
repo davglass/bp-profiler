@@ -12,7 +12,6 @@ class BrowserProfiler
     @sampleList = []
     @maxSamples = 0
     @sampleNumber = 0
-    @startTime = Time.now
   end
 
   #
@@ -21,7 +20,6 @@ class BrowserProfiler
   # or 1,000 samples are taken.
   #
   def start(bp, args)
-
     if @takingSamples == true
       bp.error("alreadyStarted", "you tried to start another sampling process, but we're already sampling")
       return
@@ -95,8 +93,6 @@ class BrowserProfiler
   # Get a single sample.  Three system calls are made, 1 to iostat and 2 to ps
   #
   def _get_sample
-    # problem passing this thru to javascript as a float
-    #stime = Time.now.to_f
     time = (Time.now - @startTime).to_f
     
     x = `iostat -n 0 | tail -1`

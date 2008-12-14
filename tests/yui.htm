@@ -40,10 +40,12 @@ YUI().use('dd-drag', function(Y) {
                     Y.get('#cpuUsage').set('innerHTML', data.ffxcpu);
                     Y.get('#residentMem').set('innerHTML', data.ffxmem);
                 }
-            }, function(x) {});
+            }, function() {});
         });
         dd.on('drag:end', function() {
             BrowserPlus.BrowserProfiler.stop({}, function(x) {});
+            Y.get('#cpuUsage').set('innerHTML', '--');
+            Y.get('#residentMem').set('innerHTML', '--');
         });
     };
 
