@@ -35,7 +35,8 @@ YUI().use('dd-drag', function(Y) {
             BrowserPlus.BrowserProfiler.start({
                 interval: 0.1,
                 callback: function(data) {
-                    console.log(arguments);
+                    //console.log(arguments);
+                    console.log(Math.round(parseFloat(data.stamp) /10), Math.round((new Date()).getTime() / 10));
                     Y.get('#cpuUsage').set('innerHTML', data.ffxcpu);
                     Y.get('#residentMem').set('innerHTML', data.ffxmem);
                 }

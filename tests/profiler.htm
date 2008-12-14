@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>browser profiler test</title>
+    <style>
+    #demo {
+        height: 50px;
+        width: 50px;
+        border: 1px solid black;
+        background-color: #ccc;
+        cursor: move;
+    }
+    </style>
+</head>
+<body>
+  <h2>browser profiler test</h2>
+    
+    <div id="demo">Drag Me</div>
+
+    <div id="results"></div>
+
+<script class="javascript" src="http://bp.yahooapis.com/2.1.11/browserplus.js"></script>
+<script type="text/javascript" src="http://yui.yahooapis.com/2.6.0/build/yahoo-dom-event/yahoo-dom-event.js"></script> 
+<script type="text/javascript" src="http://yui.yahooapis.com/2.6.0/build/dragdrop/dragdrop-min.js"></script> 
+
+<script type="text/javascript" src="profiler.js"></script> 
+
+<script>
+
+    var cpuData = [];
+
+    var stopProfile = function() {
+        BrowserPlus.BrowserProfiler.stop({}, function(x) {});
+        var report = YAHOO.tool.Profiler.getFullReport(function(data){
+            return data.calls > 0;
+        });
+        buildReport(cpuData, report);
+        //console.log(cpuData);
+        //console.log(report);
+    };
+    var startProfile = function() {
+        BrowserPlus.BrowserProfiler.start({
+            interval: 0.1,
+            callback: function(data) {
+                //console.log(arguments);
+                var o = {
+                    stamp: Math.round(parseFloat(data.stamp) /10),
+                    cpu: data.ffxcpu,
+                    mem: data.ffxmem
+                };
+                cpuData.push(o);
+                //console.log(Math.round(parseFloat(data.stamp) /10), Math.round((new Date()).getTime() / 10));
+            }
+        }, function(x) {});
+
+        YAHOO.tool.Profiler.registerObject("YAHOO.util.DD");
+        YAHOO.tool.Profiler.registerObject("YAHOO.util.Dom");
+    };
+
+
+    BrowserPlus.init({}, function(r) {
+        if (r.success) {
+            BrowserPlus.require({
+                services: [
+                {
+                    service: "BrowserProfiler",
+                    version: "0",
+                    minversion: "0.0.5"
+                }
+            ]}, function(r) {
+            if (!r.success) {
+                alert("couldn't require BrowserProfiler, did you install it?");
+            } else {
+                var dd = new YAHOO.util.DD('demo');
+                dd.startDrag = startProfile;
+                dd.endDrag = stopProfile;
+            } 
+          });
+        }
+    });
+    
+    var buildReport = function(cpuData, report) {
+        //console.log(arguments);
+        //This is really hacky, but oh well it's a hack ;)
+        var data = {};
+        for (var i in report) {
+            //console.log(i);
+            var stamps = report[i].stamps;
+            for (var s = 0; s < stamps.length; s++) {
+                var start = Math.round(stamps[s].start / 10);
+                if (!data[start]) {
+                    data[start] = {};
+                    data[start].methods = [];
+                }
+                data[start].methods.push(i);
+            }
+        }
+        for (var i in cpuData) {
+            var stamp = cpuData[i].stamp;
+            //Cover a +- 100 millisecond gap in data..
+            var s_stamp = stamp - 10;
+            var e_stamp = stamp + 10;
+            for (var s_stamp; s_stamp <= e_stamp; s_stamp++) {
+                //console.log(s_stamp);
+                if (data[s_stamp] && !data[s_stamp].cpu) {
+                    data[s_stamp].cpu = cpuData[i].cpu;
+                    data[s_stamp].mem = cpuData[i].mem;
+                }
+            }
+        }
+        //console.log(report);
+        //console.log(data);
+        var r = document.getElementById('results');
+        r.innerHTML = '';
+        var str = '<table border="1" width="50%" cellpadding="2" cellspacing="2">';
+        str += '<tr><th>Method calls</th><th>CPU</th><th>Memory</th></tr>';
+
+        for (var i in data) {
+            str += '<tr><td>' + data[i].methods.length + '</td><td>' + data[i].cpu + '</td><td>' + data[i].mem + '</td></tr>';
+        }
+
+        str += '</table>';
+
+        r.innerHTML = str;
+
+    };
+
+</script>
+</body>
+</html>
+

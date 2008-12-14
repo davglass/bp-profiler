@@ -111,8 +111,14 @@ class BrowserProfiler
     x = _ps_browser("safari")
     scpu = x[0]
     smem = x[1]
+    # Not sure how to get a full date stamp in ruby
+    # But this get's me really close..
+    # Get the time and convert it to a string
+    stamp = "%10.3f" % Time.now.to_f
+    # Not remove the . from the float after turning it into a string
+    stamp = stamp.sub(/\./, '')
 
-    return {'sample' => @sampleNumber, 'time' => time, 'ffxcpu' => fcpu, 'ffxmem' =>  fmem, 'safcpu' => scpu, 'safmem' => smem, 'sys'=>sys, 'user'=>user}
+    return {'sample' => @sampleNumber, 'stamp' => stamp, 'time' => time, 'ffxcpu' => fcpu, 'ffxmem' =>  fmem, 'safcpu' => scpu, 'safmem' => smem, 'sys'=>sys, 'user'=>user}
 
   end
 end
@@ -122,7 +128,7 @@ rubyCoreletDefinition = {
   'name'  => "BrowserProfiler",
   'major_version' => 0,
   'minor_version' => 0,
-  'micro_version' => 5,
+  'micro_version' => 6,
   'documentation' => 
     'A service that analyzes the memory and cpu usage of a web browser.  ' +
     'The service can take 1 sample or multiple samples at a specified interval.  ' +

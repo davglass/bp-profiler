@@ -1,7 +1,7 @@
 require 'BrowserProfiler.rb'
 
 def pr(val)
-  "time=#{val['time']}, sys=#{val['sys']}, user=#{val['user']}, ffxmem=#{val['ffxmem']}, ffxcpu=#{val['ffxcpu']}, safmem=#{val['safmem']}, safcpu=#{val['safcpu']},"  
+  "stamp=#{val['stamp']}, time=#{val['time']}, sys=#{val['sys']}, user=#{val['user']}, ffxmem=#{val['ffxmem']}, ffxcpu=#{val['ffxcpu']}, safmem=#{val['safmem']}, safcpu=#{val['safcpu']},"  
 end
 
 def printer(val)
