@@ -1,0 +1,93 @@
+<html>
+  <head>
+    <title> Timing Exploration </title>  
+    <link rel="stylesheet" href="foo.css" type="text/css" media="screen" />
+    </link>
+  </head>
+<body>
+  <h1> a whole lotta timing information </h1>
+
+  <p>  
+    Time offset from onload to initialized browserplus:
+	<span id="initTime"></span>
+  </p>
+
+  <p>  
+    Time offset from init browserplus to require complete:
+    <span id="requireTime"></span>
+  </p>
+
+  <p>  
+    Time offset when first startedCallback received:
+    <span id="cbTime"></span>
+  </p>
+
+  <p>  
+    Time when first youGotTime call received: <span id="ygtTime"></span>
+  </p>
+
+  <p>  
+    Time offset when second startedCallback received:
+    <span id="cb2Time"></span>
+  </p>
+
+  <p>  
+    Time when second youGotTime call received: <span id="ygt2Time"></span>
+  </p>
+
+
+</body>  
+<script language="javascript" type="text/javascript"
+		src="http://bp.yahooapis.com/2.1.11/browserplus-min.js"></script>
+<script language="javascript" type="text/javascript">
+
+var startTime = new Date();
+
+function doInit() {
+  BrowserPlus.init({}, function(x) {
+    if (!x.success) {
+      alert("couldn't init: " + x.error + " - " + x.verboseError);
+      return;
+    }
+    var x = document.getElementById("initTime");
+    x.innerHTML = (new Date() - startTime) + "ms";
+    BrowserPlus.require({services: [{service: "TimingTest"}]}, function(x) {
+      if (!x.success) {
+        alert("couldn't require: " + x.error + " - " + x.verboseError);
+        return;
+      }
+      var x = document.getElementById("requireTime");
+      x.innerHTML = (new Date() - startTime) + "ms";
+      BrowserPlus.TimingTest.youGotTime({
+        startedCallback: function(x) {
+          var x = document.getElementById("cbTime");
+          x.innerHTML = (new Date() - startTime) + "ms";
+        }
+      }, function(x) {
+        var x = document.getElementById("ygtTime");
+        x.innerHTML = (new Date() - startTime) + "ms";
+
+        BrowserPlus.TimingTest.youGotTime({
+          startedCallback: function(x) {
+            var x = document.getElementById("cb2Time");
+            x.innerHTML = (new Date() - startTime) + "ms";
+          }
+        }, function(x) {
+          var x = document.getElementById("ygt2Time");
+          x.innerHTML = (new Date() - startTime) + "ms";
+        });
+      });
+    });
+  });
+}
+
+if (window.attachEvent)
+{
+    window.attachEvent("onload", function(){doInit()});
+}
+else
+{
+    doInit();
+}
+
+</script>
