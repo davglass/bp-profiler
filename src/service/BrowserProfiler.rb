@@ -1,6 +1,3 @@
-require 'rbconfig'
-
-
 #
 # Profile the current browser (currently hacked )
 # 
@@ -17,13 +14,10 @@ class BrowserProfiler
     @sampleNumber = 0
     @browsers = {'firefox' => 'firefox', 'safari' => 'Safari', 'ie' => 'iexplore'}
     @os = 'win' #default to windows
-    os = Config::CONFIG['host_os']
-    os = os[0, 4]
-    if os == 'darw'
+    if RUBY_PLATFORM.downcase.include?("darwin")
         @os = 'mac'
         @browsers = {'firefox' => 'firefox-bin', 'safari' => 'safari'}
     end
-    puts @os
     
     #What comes in here??
   end
