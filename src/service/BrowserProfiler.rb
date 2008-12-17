@@ -103,7 +103,9 @@ class BrowserProfiler
         end
     else
         #THIS IS REALLY HACKY !!!!!!!!
-        cmdLine = "typeperf.exe \"\Process(#{pat})\% Processor Time\" -sc 1"
+        #AND REALLY REALLY REALLY SLOW.. 2 seconds per sample :(
+        #Damn Windows....
+        cmdLine = "typeperf.exe \"\Process(#{pat})\\% Processor Time\" -sc 1"
 
         pipe = IO.popen(cmdLine)
         cmd = pipe.readlines
@@ -124,8 +126,9 @@ class BrowserProfiler
         
         
         if x1[1] and x2[4]
-            cpu = x1[1]
-            mem = x2[4]
+            #This needs some formatting!!
+            cpu = Float(x1[1].sub('"', ''))
+            mem = Float(x1[4].sub('"', ''))
         end
     end
     

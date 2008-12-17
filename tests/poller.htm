@@ -46,6 +46,7 @@
     };
     
     var mycb = function(r) {
+        //alert('HERE');
         dbg(formatSample(r));
     };
 
@@ -57,7 +58,7 @@
         if (res.success) {  
             BrowserPlus.require({ services: [ {service: "BrowserProfiler", version: "0", minversion: "0.0.7"} ]}, function(r) {
                 if (r.success) {  
-                    BrowserPlus.BrowserProfiler.start({ callback: mycb, interval: 1.0 }, function(x){});
+                    BrowserPlus.BrowserProfiler.start({ callback: mycb, interval: 0.5 }, function(x){});
                 } else {
                     err("REQUIRE", r);
                 }
