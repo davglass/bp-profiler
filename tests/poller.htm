@@ -25,14 +25,8 @@
 
     var formatSample = function(params) {
         var map = {
-            sample: "Sample #      ",
-            time:   "Time          ",
-            sys:    "System CPU    ",
-            user:   "User CPU      ",
-            ffxcpu: "Firefox CPU   ",
-            ffxmem: "Firefox Memory",
-            safcpu: "Safari CPU    ",
-            safmem: "Safari Memory "
+            sample: "Sample #       ",
+            time:   "Time           "
         };
 
         var arr = [];
@@ -41,6 +35,11 @@
             if (map.hasOwnProperty(k)) {
                 arr.push(map[k] + ": " + params[k]);
             }
+        }
+
+        for (var i in params.browsers) {
+            arr.push(params.browsers[i].name + ' CPU        :' + params.browsers[i].cpu);
+            arr.push(params.browsers[i].name + ' Mem        :' + params.browsers[i].mem);
         }
 
         return arr.join("\n");
@@ -56,7 +55,7 @@
 
     BrowserPlus.init(function(res) {  
         if (res.success) {  
-            BrowserPlus.require({ services: [ {service: "BrowserProfiler", version: "0", minversion: "0.0.5"} ]}, function(r) {
+            BrowserPlus.require({ services: [ {service: "BrowserProfiler", version: "0", minversion: "0.0.7"} ]}, function(r) {
                 if (r.success) {  
                     BrowserPlus.BrowserProfiler.start({ callback: mycb, interval: 1.0 }, function(x){});
                 } else {

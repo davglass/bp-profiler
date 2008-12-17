@@ -1,7 +1,9 @@
+
 require 'BrowserProfiler.rb'
 
 def pr(val)
-  "stamp=#{val['stamp']}, time=#{val['time']}, sys=#{val['sys']}, user=#{val['user']}, ffxmem=#{val['ffxmem']}, ffxcpu=#{val['ffxcpu']}, safmem=#{val['safmem']}, safcpu=#{val['safcpu']},"  
+  str = "stamp=#{val['stamp']}, time=#{val['time']}"
+  return str
 end
 
 def printer(val)
@@ -33,6 +35,7 @@ end
 
 bp = BPProxy.new
 profiler = BrowserProfiler.new([])
+
 
 if false
   profiler.sample(bp, [])

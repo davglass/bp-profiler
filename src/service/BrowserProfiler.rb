@@ -1,3 +1,6 @@
+require 'rbconfig'
+
+
 #
 # Profile the current browser (currently hacked )
 # 
@@ -12,6 +15,17 @@ class BrowserProfiler
     @sampleList = []
     @maxSamples = 0
     @sampleNumber = 0
+    @browsers = {'firefox' => 'firefox', 'safari' => 'Safari', 'ie' => 'iexplore'}
+    @os = 'win' #default to windows
+    os = Config::CONFIG['host_os']
+    os = os[0, 4]
+    if os == 'darw'
+        @os = 'mac'
+        @browsers = {'firefox' => 'firefox-bin', 'safari' => 'safari'}
+    end
+    puts @os
+    
+    #What comes in here??
   end
 
   #
@@ -72,21 +86,58 @@ class BrowserProfiler
     bp.complete(@sampleList)
   end
 
+    def _ps_browsers()
+        res = []
+        @browsers.each do |name, pat|
+            res.push(_ps_browser(name, pat))
+        end
+        return res
+    end
+
   #
   # Get sample data for the given browser.
   #
-  def _ps_browser(pat)
-    x = `ps -ocomm,pcpu,rss -xwwc | grep -i #{pat}`
-
-    if x.length > 0
-      cpu = Float(/\d+\.\d+/.match(x)[0])
-      mem = Float(/\d+$/.match(x)[0])*1024.0
+  def _ps_browser(name, pat)
+    cpu = -1.0
+    mem = -1.0
+    
+    if @os == 'mac'
+        x = `ps -ocomm,pcpu,rss -xwwc | grep -i #{pat}`
+        if x.length > 0
+          cpu = Float(/\d+\.\d+/.match(x)[0])
+          mem = Float(/\d+$/.match(x)[0])*1024.0
+        end
     else
-      cpu = -1.0
-      mem = -1.0
+        #THIS IS REALLY HACKY !!!!!!!!
+        cmdLine = "typeperf.exe \"\Process(#{pat})\% Processor Time\" -sc 1"
+
+        pipe = IO.popen(cmdLine)
+        cmd = pipe.readlines
+        pipe.close
+
+        x1 = cmd[2]
+        x1 = x1.split(%r{,\s*})
+
+
+        cmdLine2 = "tasklist /fi \"IMAGENAME eq #{pat}.exe\" /fo CSV /nh"
+
+        pipe = IO.popen(cmdLine2)
+        cmd2 = pipe.readlines
+        pipe.close
+
+        x2 = cmd2[1]
+        x2 = x2.split(%r{,\s*})
+        
+        
+        if x1[1] and x2[4]
+            cpu = x1[1]
+            mem = x2[4]
+        end
     end
     
-    return [cpu, mem]
+
+    ret = { 'name' => name, 'cpu' => cpu, 'mem' => mem }
+    return ret
   end
   
   #
@@ -95,18 +146,8 @@ class BrowserProfiler
   def _get_sample
     time = (Time.now - @startTime).to_f
     
-    x = `iostat -n 0 | tail -1`
-    x = x.scan(/\d+/)
-    user = Float(x[0])
-    sys  = Float(x[1])
+    res = _ps_browsers()
 
-    x = _ps_browser("firefox-bin")
-    fcpu = x[0]
-    fmem = x[1]
-
-    x = _ps_browser("safari")
-    scpu = x[0]
-    smem = x[1]
     # Not sure how to get a full date stamp in ruby
     # But this get's me really close..
     # Get the time and convert it to a string
@@ -114,7 +155,7 @@ class BrowserProfiler
     # Not remove the . from the float after turning it into a string
     stamp = stamp.sub(/\./, '')
 
-    return {'sample' => @sampleNumber, 'stamp' => stamp, 'time' => time, 'ffxcpu' => fcpu, 'ffxmem' =>  fmem, 'safcpu' => scpu, 'safmem' => smem, 'sys'=>sys, 'user'=>user}
+    return {'sample' => @sampleNumber, 'stamp' => stamp, 'time' => time, 'browsers' => res }
 
   end
 end
@@ -124,7 +165,7 @@ rubyCoreletDefinition = {
   'name'  => "BrowserProfiler",
   'major_version' => 0,
   'minor_version' => 0,
-  'micro_version' => 6,
+  'micro_version' => 7,
   'documentation' => 
     'A service that analyzes the memory and cpu usage of a web browser.  ' +
     'The service can take 1 sample or multiple samples at a specified interval.  ' +
