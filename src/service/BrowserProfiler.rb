@@ -127,8 +127,8 @@ class BrowserProfiler
         
         if x1[1] and x2[4]
             #This needs some formatting!!
-            cpu = Float(x1[1].sub('"', ''))
-            mem = Float(x1[4].sub('"', ''))
+            cpu = x1[1]
+            mem = x2[4]
         end
     end
     
