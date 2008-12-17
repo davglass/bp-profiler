@@ -8,10 +8,7 @@ class TimingTest
     
     startTime = Time.now    
 
-    Thread.new(bp) do | bp |
-      samps = Array.new 
-      bp.complete(samps)
-    end
+    bp.complete(samps)
   end
 end
 
