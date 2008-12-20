@@ -46,8 +46,8 @@
                 //console.log(arguments);
                 var o = {
                     stamp: Math.round(parseFloat(data.stamp) /10),
-                    cpu: data.ffxcpu,
-                    mem: data.ffxmem
+                    cpu: data.browsers[1].cpu,
+                    mem: data.browsers[1].mem
                 };
                 cpuData.push(o);
                 //console.log(Math.round(parseFloat(data.stamp) /10), Math.round((new Date()).getTime() / 10));
