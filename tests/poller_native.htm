@@ -1,0 +1,141 @@
+<html>  
+<head>
+    <title>Using BrowserPlus Services</title>
+    <style type="text/css" media="screen">
+        #result {border:1px solid #999; background:#ccc; font-size:8pt;padding:5px;}
+        #mon {
+            border: 1px solid black;
+            height: 100px;
+            width: 25px;
+            background-color: white;
+            position: relative;
+        }
+        #bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 25px;
+            height: 0;
+            background-color: green;
+        }
+        .anim {
+            position: relative;
+            height: 50px;
+            width: 100px;
+            border: 1px solid black;
+            background-color: #00B8BF;
+            top: 100px;
+        }
+        
+    </style>
+</head>  
+<body>  
+
+    <p><strong>Please Suspend Firebug when you run this test..</strong></p>
+    <p>Now click anywhere on page and the boxes will start moving around and watch the meter. You can do it again when it's done.</p>
+
+    <pre id="result">Samples displayed here...</pre>
+    <div id="mon"><div id="bar"></div></div>
+    <div id="anim1" class="anim">Anim #1</div>
+    <div id="anim2" class="anim">Anim #2</div>
+    <div id="anim3" class="anim">Anim #3</div>
+    <div id="anim4" class="anim">Anim #4</div>
+    <div id="anim5" class="anim">Anim #5</div>
+    
+
+    <script type="text/javascript" src="http://bp.yahooapis.com/2.1.11/browserplus-min.js"></script>  
+    <script type="text/javascript" src="http://yui.yahooapis.com/3.0.0pr2/build/yui/yui-min.js"></script>
+    <script type="text/javascript">  
+
+    var dbg = function(s) {
+        var el = document.getElementById("result");
+        el.innerHTML = s;
+    };
+
+
+    var err = function(f, result) {
+        dbg(f + " Error: " + result.error + (result.verboseError ? (": " + result.verboseError) : ""));
+    };
+
+    BrowserPlus.init(function(res) {  
+        if (res.success) {  
+            BrowserPlus.require({
+                services: [
+                    {
+                        service: "BrowserProfiler",
+                        version: "0",
+                        minversion: "0.1.0"
+                    }]
+                }, function(r) {
+                    if (r.success) {
+                    } else {
+                        err("REQUIRE", r);
+                    }
+            });
+        } else {
+            err("INIT", res);
+        }
+    });
+
+    var getSample = function(Y) {
+        BrowserPlus.BrowserProfiler.sample({},
+            function(x) {
+                Y.get('#bar').setStyle('height', x.value.cpu + 'px');
+                dbg('CPU: ' + x.value.cpu + '%<br>Mem: ' + x.value.mem);
+        });
+    };
+
+    YUI().use('anim', function(Y) {
+        var handle = Y.later(100, {}, getSample, Y, true);
+        //Get all the div's with the class anim
+        var anims = Y.Node.all('div.anim'),
+            counter = 0;
+        anims.each(function(v, k, items) {
+            //Get a reference to the Node instance
+            var a = v; 
+            counter++;
+            //Add the FX plugin
+            a.plug(Y.plugin.NodeFX);
+
+            //Set the attributes on the animation
+            a.fx.setAtts({
+                from: {
+                    left: 0
+                },
+                to: {
+                    curve: function() {
+                        var points = [],
+                            n = 10;
+
+                        for (var i = 0; i < n; ++i) {
+                            points.push([
+                                Math.floor(Math.random()*Y.DOM.winWidth() - 60 - a.get('offsetWidth')),
+                                Math.floor(Math.random()*Y.DOM.winHeight() - a.get('offsetHeight'))
+                            ]);
+                        }
+                        return points;
+                    }
+                },
+                //Do the animation 20 times
+                iterations: 10,
+                //Alternate it so it "bounces" across the screen
+                direction: 'alternate',
+                //Give all of them a different duration so we get different speeds.
+                //duration: ((counter * 1.75) + 1)
+            });
+            a.fx.on('end', function() {
+                a.setStyles({
+                    top: '100px',
+                    left: '0'
+                });
+            });
+            Y.get(document).on('click', function() {
+                a.fx.run();
+            });
+        });
+            
+    });
+
+    </script>  
+</body>  
+</html>
