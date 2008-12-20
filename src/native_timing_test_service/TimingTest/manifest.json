@@ -1,0 +1,10 @@
+{
+  "type": "standalone",
+  "CoreletLibrary": "libTimingTest.so",
+  "strings": { 
+    "en": { 
+      "title": "Timing Test Service", 
+      "summary": "A test service to understand current timing delays in calling into and out of native services."
+    }
+  }
+}
