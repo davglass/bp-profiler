@@ -39,19 +39,38 @@
 #include <string>
 
 #include "bptypeutil.h"
+#include "sample.h"
 
 static const BPCFunctionTable * g_bpCoreFunctions;
+
+struct ServiceContext
+{
+    int pid;
+};
 
 static int
 myAllocate(void ** instance, unsigned int, const BPElement * ctx)
 {
-    *instance = NULL;
+    bp::Object * o = bp::Object::build(ctx);
+    ServiceContext * myCtx = new ServiceContext;
+    
+    // extrace the client's process ID, available in 2.1.14 and later
+    if (o->has("clientPid", BPTInteger)) {
+        myCtx->pid = (int) *((long long *) o->get("clientPid"));
+    } else {
+        myCtx->pid = -1;
+    }
+    
+    *instance = (void*) myCtx;
+    delete o;
+
     return 0;
 }
 
 static void
 myDestroy(void * instance)
 {
+    delete (ServiceContext *) instance;
 }
 
 static void
@@ -63,12 +82,32 @@ static void
 myInvoke(void * instance, const char * funcName,
           unsigned int tid, const BPElement * elem)
 {
+    ServiceContext * myCtx = (ServiceContext *) instance;
+
     if (!strcmp(funcName, "start")) {
         g_bpCoreFunctions->postError(tid, BPE_NOT_IMPLEMENTED, NULL);
     } else if (!strcmp(funcName, "stop")) {
         g_bpCoreFunctions->postError(tid, BPE_NOT_IMPLEMENTED, NULL);
     } else if (!strcmp(funcName, "sample")) {        
-        g_bpCoreFunctions->postError(tid, BPE_NOT_IMPLEMENTED, NULL);
+        if (myCtx->pid < 0) {
+            g_bpCoreFunctions->postError(
+                tid, "updateRequired",
+                "this platform version is too old, 2.1.14 or greater required");
+        } else {
+            // attain a sample.
+            bp::Map m;
+            int cpu, mem;
+            if (!get_sample(myCtx->pid, mem, cpu)) {
+                g_bpCoreFunctions->postError(
+                    tid, "samplingError",
+                    "couldn't sample your browser process, internal error");
+            } else {
+                m.add("cpu", new bp::Integer(cpu));
+                m.add("mem", new bp::Integer(mem));
+                g_bpCoreFunctions->postResults(tid, m.elemPtr());
+            }
+            // 'm' will recursively release all held memory.
+        }
     }
 }
 

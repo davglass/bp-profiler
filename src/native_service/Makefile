@@ -6,10 +6,10 @@ BPSDK_PATH ?= bpsdk
 SRC_PATH ?= .
 INCLUDE = -I${BPSDK_PATH}/include
 NAME = BrowserProfiler
-SRCS = ${SRC_PATH}/service.cpp ${SRC_PATH}/bptypeutil.cpp
+SRCS = ${SRC_PATH}/service.cpp ${SRC_PATH}/bptypeutil.cpp ${SRC_PATH}/sample_Darwin.cpp
 
 ${NAME}/lib${NAME}.so: ${SRCS} ${SRC_PATH}/service.cpp ${NAME} ${NAME}/manifest.json
-	g++ -bundle -o $@ ${INCLUDE} ${SRCS}
+	g++ -Wall -bundle -o $@ ${INCLUDE} ${SRCS}
 
 ${NAME}/manifest.json: ${SRC_PATH}/manifest.json
 	sed -e 's/@ServiceLibrary@/lib${NAME}.so/' < $< > $@
