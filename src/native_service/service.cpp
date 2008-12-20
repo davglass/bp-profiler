@@ -55,9 +55,12 @@ myAllocate(void ** instance, unsigned int, const BPElement * ctx)
     ServiceContext * myCtx = new ServiceContext;
     
     // extrace the client's process ID, available in 2.1.14 and later
-    if (o->has("clientPid", BPTInteger)) {
-        myCtx->pid = (int) *((long long *) o->get("clientPid"));
-    } else {
+    if (o->has("clientPid", BPTInteger))
+    {
+        myCtx->pid = (int) ((bp::Integer *) o->get("clientPid"))->value();
+    }
+    else
+    {
         myCtx->pid = -1;
     }
     
@@ -96,13 +99,14 @@ myInvoke(void * instance, const char * funcName,
         } else {
             // attain a sample.
             bp::Map m;
-            int cpu, mem;
+            float cpu;
+            long long mem;
             if (!get_sample(myCtx->pid, mem, cpu)) {
                 g_bpCoreFunctions->postError(
                     tid, "samplingError",
                     "couldn't sample your browser process, internal error");
             } else {
-                m.add("cpu", new bp::Integer(cpu));
+                m.add("cpu", new bp::Double(cpu));
                 m.add("mem", new bp::Integer(mem));
                 g_bpCoreFunctions->postResults(tid, m.elemPtr());
             }

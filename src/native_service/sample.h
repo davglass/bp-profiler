@@ -4,6 +4,6 @@
  */
 #ifndef __SAMPLE_H__
 
-bool get_sample(int pid, int &residentMem, int &cpuUsage);
+bool get_sample(int pid, long long &residentMem, float &cpuUsage);
 
 #endif
