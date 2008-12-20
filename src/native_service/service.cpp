@@ -41,27 +41,66 @@
 #include "bptypeutil.h"
 #include "sample.h"
 
+#define MAX_SAMPLES 1000
+#define SAMPLE_INTERVAL_MS 100
+
 static const BPCFunctionTable * g_bpCoreFunctions;
 
 struct ServiceContext
 {
+    bool running;
+    bp::List samples;
     int pid;
+    pthread_t thr;
+    // fine to have this in service context, because only one
+    // sampling session is allowed at a time
+    int tid;
 };
+
+static void *
+sampleThread(void * arg)
+{
+    ServiceContext * myCtx = (ServiceContext *) arg;
+    
+    while (myCtx->samples.size() < MAX_SAMPLES && myCtx->running)
+    {
+        float cpu;
+        long long mem;
+
+        if (get_sample(myCtx->pid, mem, cpu)) {
+            bp::Map * m = new bp::Map;
+            m->add("cpu", new bp::Double(cpu));
+            m->add("mem", new bp::Integer(mem));
+            myCtx->samples.append(m);
+        }
+
+        // now pause SAMPLE_INTERVAL_MS
+        usleep(1000 * SAMPLE_INTERVAL_MS);
+    }
+
+    g_bpCoreFunctions->postResults(myCtx->tid, myCtx->samples.elemPtr());    
+
+    // XXX: clear samples list
+    return NULL;
+}
+
 
 static int
 myAllocate(void ** instance, unsigned int, const BPElement * ctx)
 {
     bp::Object * o = bp::Object::build(ctx);
+
+    // allocate and initialize session context
     ServiceContext * myCtx = new ServiceContext;
-    
-    // extrace the client's process ID, available in 2.1.14 and later
+    myCtx->pid = -1;
+    myCtx->tid = 0;
+    myCtx->running = false;    
+    memset((void *) myCtx->thr, 0, sizeof(pthread_t));
+
+    // extract the client's process ID, available in 2.1.14 and later
     if (o->has("clientPid", BPTInteger))
     {
         myCtx->pid = (int) ((bp::Integer *) o->get("clientPid"))->value();
-    }
-    else
-    {
-        myCtx->pid = -1;
     }
     
     *instance = (void*) myCtx;
@@ -73,6 +112,14 @@ myAllocate(void ** instance, unsigned int, const BPElement * ctx)
 static void
 myDestroy(void * instance)
 {
+    ServiceContext * myCtx = new ServiceContext;
+
+    if (myCtx->running) {
+        void * ignore;
+        myCtx->running = false;
+        pthread_join(myCtx->thr, &ignore);
+    }
+    
     delete (ServiceContext *) instance;
 }
 
@@ -87,18 +134,49 @@ myInvoke(void * instance, const char * funcName,
 {
     ServiceContext * myCtx = (ServiceContext *) instance;
 
-    if (!strcmp(funcName, "start")) {
-        g_bpCoreFunctions->postError(tid, BPE_NOT_IMPLEMENTED, NULL);
-    } else if (!strcmp(funcName, "stop")) {
-        g_bpCoreFunctions->postError(tid, BPE_NOT_IMPLEMENTED, NULL);
-    } else if (!strcmp(funcName, "sample")) {        
+    if (!strcmp(funcName, "start"))
+    {
+        if (myCtx->running) {
+            g_bpCoreFunctions->postError(
+                tid, "alreadyStarted",
+                "You tried to start sampling, but we're already sampling.");
+            return;
+        }
+        
+        myCtx->running = true;
+        myCtx->tid = tid;
+
+        if (0 != pthread_create(&(myCtx->thr), NULL,
+                                sampleThread, (void *) myCtx))
+        {
+            myCtx->running = false;
+            myCtx->tid = 0;            
+            g_bpCoreFunctions->postError(tid, "internalError",
+                                         "couldn't spawn sampling thread");
+            return;
+        }
+    }
+    else if (!strcmp(funcName, "stop"))
+    {
+        if (!myCtx->running) {
+            g_bpCoreFunctions->postError(
+                tid, "notSampling",
+                "You tried to stop sampling, but start wasn't called.");
+            return;
+        }
+        myCtx->running = false;
+        // join sampling thread
+        void * ignore;
+        pthread_join(myCtx->thr, &ignore);
+    }
+    else if (!strcmp(funcName, "sample"))
+    {
         if (myCtx->pid < 0) {
             g_bpCoreFunctions->postError(
                 tid, "updateRequired",
                 "this platform version is too old, 2.1.14 or greater required");
         } else {
             // attain a sample.
-            bp::Map m;
             float cpu;
             long long mem;
             if (!get_sample(myCtx->pid, mem, cpu)) {
@@ -106,6 +184,7 @@ myInvoke(void * instance, const char * funcName,
                     tid, "samplingError",
                     "couldn't sample your browser process, internal error");
             } else {
+                bp::Map m;
                 m.add("cpu", new bp::Double(cpu));
                 m.add("mem", new bp::Integer(mem));
                 g_bpCoreFunctions->postResults(tid, m.elemPtr());
