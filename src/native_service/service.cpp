@@ -39,6 +39,7 @@
 #include <string>
 
 #include "bptypeutil.h"
+#include "bpstopwatch.h"
 #include "sample.h"
 
 #define MAX_SAMPLES 1000
@@ -55,6 +56,8 @@ struct ServiceContext
     // fine to have this in service context, because only one
     // sampling session is allowed at a time
     int tid;
+    bp::time::Stopwatch sw;
+    long long cb;
 };
 
 static void *
@@ -71,7 +74,14 @@ sampleThread(void * arg)
             bp::Map * m = new bp::Map;
             m->add("cpu", new bp::Double(cpu));
             m->add("mem", new bp::Integer(mem));
-            myCtx->samples.append(m);
+            m->add("offset", new bp::Double(myCtx->sw.elapsedSec()));
+            if (myCtx->cb) {
+                g_bpCoreFunctions->invoke(myCtx->tid, myCtx->cb,
+                                          m->elemPtr());
+                delete m;
+            } else {
+                myCtx->samples.append(m);
+            }
         }
 
         // now pause SAMPLE_INTERVAL_MS
@@ -94,8 +104,9 @@ myAllocate(void ** instance, unsigned int, const BPElement * ctx)
     ServiceContext * myCtx = new ServiceContext;
     myCtx->pid = -1;
     myCtx->tid = 0;
+    myCtx->cb = 0;
     myCtx->running = false;    
-    memset((void *) myCtx->thr, 0, sizeof(pthread_t));
+    memset((void *) &(myCtx->thr), 0, sizeof(pthread_t));
 
     // extract the client's process ID, available in 2.1.14 and later
     if (o->has("clientPid", BPTInteger))
@@ -145,6 +156,16 @@ myInvoke(void * instance, const char * funcName,
         
         myCtx->running = true;
         myCtx->tid = tid;
+        myCtx->sw.reset();
+        myCtx->sw.start();
+
+        // extract callback if present
+        bp::Object * o = bp::Object::build(elem);
+        if (o->has("callback", BPTCallBack))
+        {
+            myCtx->cb = (int) ((bp::CallBack *) o->get("callback"))->value();
+        }
+        delete o;
 
         if (0 != pthread_create(&(myCtx->thr), NULL,
                                 sampleThread, (void *) myCtx))
@@ -165,6 +186,7 @@ myInvoke(void * instance, const char * funcName,
             return;
         }
         myCtx->running = false;
+        myCtx->cb = 0;
         // join sampling thread
         void * ignore;
         pthread_join(myCtx->thr, &ignore);
@@ -197,7 +219,8 @@ myInvoke(void * instance, const char * funcName,
 static BPArgumentDefinition s_startArgs[] = {
     {
         "callback",
-        "XXX",
+        "If provided callback will be invoked for each sample rather than "
+        "returning all data in an array at the end of sampling",
         BPTCallBack,
         BP_FALSE
     }
