@@ -1,0 +1,37 @@
+Building Instructions:
+
+Currently the Makefile is designed for OSX, but the build should be
+straightforward to port to win32.  This service is just a test to
+understand roundtrip times in the system.
+
+building:
+
+1. make
+2. [path_to_bpsdk]/bin/ServiceInstaller -v TimingTest
+3. then ensure BrowserPlus 2.1.14 or greater is installed
+4. open ../../tests/timing_test.htm in a browser
+
+This is what I see on FFX 3/leopard (with firebug enabled):
+
+Time offset from onload to initialized browserplus: 79ms
+Time offset from init browserplus to require complete: 90ms
+Time offset when first startedCallback received: 94ms
+Time when first youGotTime call received: 95ms
+Time offset when second startedCallback received: 98ms
+Time when second youGotTime call received: 99ms 
+
+This is what I see on Safari/leopard:
+
+Time offset from onload to initialized browserplus: 16ms
+Time offset from init browserplus to require complete: 21ms
+Time offset when first startedCallback received: 23ms
+Time when first youGotTime call received: 24ms
+Time offset when second startedCallback received: 25ms
+Time when second youGotTime call received: 25ms
+
+(Tests on a newish macbook pro)
+
+Conclusion?  A native service should give us about ~5ms correlation
+between browser based javascript and profiling data acquired from
+BrowserPlus loading a native service... Way dependent on os, system
+speed, and what you got running in yer browser.  but good.

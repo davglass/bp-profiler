@@ -33,10 +33,12 @@ YUI().use('dd-drag', function(Y) {
         });
         dd.on('drag:start', function() {
             BrowserPlus.BrowserProfiler.start({
-                interval: 0.1,
+//                interval: 0.1,
                 callback: function(data) {
-                    Y.get('#cpuUsage').set('innerHTML', data.browsers[1].cpu + '%');
-                    Y.get('#residentMem').set('innerHTML', data.browsers[1].mem);
+                    //console.log(arguments);
+                    console.log(Math.round(parseFloat(data.stamp) /10), Math.round((new Date()).getTime() / 10));
+                    Y.get('#cpuUsage').set('innerHTML', data.cpu);
+                    Y.get('#residentMem').set('innerHTML', data.mem);
                 }
             }, function() {});
         });
@@ -55,7 +57,7 @@ YUI().use('dd-drag', function(Y) {
                 {
                     service: "BrowserProfiler",
                     version: "0",
-                    minversion: "0.0.5"
+                    minversion: "0.1.0"
                 }
             ]}, function(r) {
             if (!r.success) {
