@@ -65,11 +65,15 @@ sampleThread(void * arg)
 {
     ServiceContext * myCtx = (ServiceContext *) arg;
     
+    std::cout << "sampling thread running" << std::endl;
+
     while (myCtx->samples.size() < MAX_SAMPLES && myCtx->running)
     {
         float cpu;
         long long mem;
-
+        bp::time::Stopwatch sampleTime;
+        sampleTime.start();
+        
         if (get_sample(myCtx->pid, mem, cpu)) {
             bp::Map * m = new bp::Map;
             m->add("cpu", new bp::Double(cpu));
@@ -84,13 +88,20 @@ sampleThread(void * arg)
             }
         }
 
-        // now pause SAMPLE_INTERVAL_MS
-        usleep(1000 * SAMPLE_INTERVAL_MS);
+        // taking a sample takes time.  sleep less.
+        int msToSleep = SAMPLE_INTERVAL_MS;
+        int sampleTookMS = (int) (sampleTime.elapsedSec() * 1000);        
+        if (msToSleep > sampleTookMS) msToSleep -= sampleTookMS;
+
+        // now pause
+        usleep(1000 * msToSleep);
     }
 
     g_bpCoreFunctions->postResults(myCtx->tid, myCtx->samples.elemPtr());    
+    std::cout << "sampling thread returning" << std::endl;
 
-    // XXX: clear samples list
+    myCtx->samples.clear();
+
     return NULL;
 }
 
@@ -123,7 +134,7 @@ myAllocate(void ** instance, unsigned int, const BPElement * ctx)
 static void
 myDestroy(void * instance)
 {
-    ServiceContext * myCtx = new ServiceContext;
+    ServiceContext * myCtx = (ServiceContext *) instance;
 
     if (myCtx->running) {
         void * ignore;
@@ -145,6 +156,9 @@ myInvoke(void * instance, const char * funcName,
 {
     ServiceContext * myCtx = (ServiceContext *) instance;
 
+    std::cout << funcName << " called!"<< std::endl;
+        
+
     if (!strcmp(funcName, "start"))
     {
         if (myCtx->running) {
@@ -159,8 +173,17 @@ myInvoke(void * instance, const char * funcName,
         myCtx->sw.reset();
         myCtx->sw.start();
 
-        // extract callback if present
+        // use bptypeutil to simplify argument extraction
         bp::Object * o = bp::Object::build(elem);
+
+        // invoke "started callback" if present
+        if (o->has("startedCallback", BPTCallBack))
+        {
+            long long scb = ((bp::CallBack *) o->get("startedCallback"))->value();
+            g_bpCoreFunctions->invoke(tid, scb, bp::Null().elemPtr());
+        }
+
+        // extract callback if present
         if (o->has("callback", BPTCallBack))
         {
             myCtx->cb = (int) ((bp::CallBack *) o->get("callback"))->value();
@@ -218,6 +241,15 @@ myInvoke(void * instance, const char * funcName,
 
 static BPArgumentDefinition s_startArgs[] = {
     {
+        "startedCallback",
+        "A callback which will be invoked immediately (when provided) at "
+        "the point when sampling begins.  The intention of this callback is "
+        "to allow javascript based code and sampling to attain a correlated "
+        "zero point for the correlation of resource usage and execution state.",
+        BPTCallBack,
+        BP_FALSE
+    },
+    {
         "callback",
         "If provided callback will be invoked for each sample rather than "
         "returning all data in an array at the end of sampling",
@@ -229,7 +261,7 @@ static BPArgumentDefinition s_startArgs[] = {
 static BPFunctionDefinition s_myServiceFunctions[] = {
     {
         "start",
-        "start taking samples.  (XXX)",
+        "Begin taking samples.  (XXX)",
         sizeof(s_startArgs)/sizeof(s_startArgs[0]),
         s_startArgs
     },
@@ -250,7 +282,7 @@ static BPFunctionDefinition s_myServiceFunctions[] = {
 
 static BPCoreletDefinition s_myServiceDef = {
     "BrowserProfiler",
-    0, 1, 0,
+    0, 1, 1,
     "A service that analyzes the memory and cpu usage of a web browser.  "
     "The service can take 1 sample or multiple samples at a specified interval.  "
     "When sampling at intervals, at most 1,000 samples are taken.  If you provide "

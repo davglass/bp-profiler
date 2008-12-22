@@ -826,6 +826,22 @@ bp::List::operator= (const List & other)
     return *this;
 }
 
+void bp::List::clear()
+{
+    for (unsigned int i = 0; i < values.size(); i++)
+    {
+        delete values[i];
+    }
+    values.clear();
+    
+    if (e.value.listVal.elements != NULL) 
+    {
+        free(e.value.listVal.elements);
+    }
+    e.value.listVal.size = 0;
+    e.value.listVal.elements = NULL;
+}
+
 bp::List::~List()
 {
     for (unsigned int i = 0; i < values.size(); i++)

@@ -227,6 +227,9 @@ namespace bp {
         operator std::vector<const Object *>() const; // throw(ConversionException);
         
         virtual const Object & operator[](unsigned int index) const; // throw();
+
+        // empty out a list
+        void clear();
     private:
         std::vector<Object *> values;
     };

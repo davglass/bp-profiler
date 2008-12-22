@@ -28,31 +28,31 @@
 
 <script>
 
-    var cpuData = [];
+    var startTime = null;
 
     var stopProfile = function() {
         BrowserPlus.BrowserProfiler.stop({}, function(x) {});
-        var report = YAHOO.tool.Profiler.getFullReport(function(data){
-            return data.calls > 0;
-        });
-        buildReport(cpuData, report);
-        //console.log(cpuData);
-        //console.log(report);
     };
     var startProfile = function() {
+        var beforeCall = (new Date()).getTime();
         BrowserPlus.BrowserProfiler.start({
-            interval: 0.1,
-            callback: function(data) {
-                //console.log(arguments);
-                var o = {
-                    stamp: Math.round(parseFloat(data.stamp) /10),
-                    cpu: data.browsers[1].cpu,
-                    mem: data.browsers[1].mem
-                };
-                cpuData.push(o);
-                //console.log(Math.round(parseFloat(data.stamp) /10), Math.round((new Date()).getTime() / 10));
+            startedCallback: function(data) {
+				var afterCall = (new Date()).getTime();
+				startTime = (afterCall + beforeCall) / 2;
+				console.log("startedCallback delay: " + 
+							(afterCall - beforeCall) + "ms");
             }
-        }, function(x) {});
+        }, function(cpuData) {
+			var report = YAHOO.tool.Profiler.getFullReport(function(data){
+				return data.calls > 0;
+			});
+			buildReport(cpuData.value, report);
+			console.log(cpuData.value);
+			console.log(report);
+
+            YAHOO.tool.Profiler.unregisterObject("YAHOO.util.DD");
+            YAHOO.tool.Profiler.unregisterObject("YAHOO.util.Dom");
+		});
 
         YAHOO.tool.Profiler.registerObject("YAHOO.util.DD");
         YAHOO.tool.Profiler.registerObject("YAHOO.util.Dom");
@@ -66,7 +66,7 @@
                 {
                     service: "BrowserProfiler",
                     version: "0",
-                    minversion: "0.0.6"
+                    minversion: "0.1.1"
                 }
             ]}, function(r) {
             if (!r.success) {
@@ -83,41 +83,36 @@
     var buildReport = function(cpuData, report) {
         //console.log(arguments);
         //This is really hacky, but oh well it's a hack ;)
-        var data = {};
+		// (lth) and I doubled the hackery
         for (var i in report) {
             //console.log(i);
             var stamps = report[i].stamps;
             for (var s = 0; s < stamps.length; s++) {
-                var start = Math.round(stamps[s].start / 10);
-                if (!data[start]) {
-                    data[start] = {};
-                    data[start].methods = [];
-                }
-                data[start].methods.push(i);
-            }
-        }
-        for (var i in cpuData) {
-            var stamp = cpuData[i].stamp;
-            //Cover a +- 100 millisecond gap in data..
-            var s_stamp = stamp - 10;
-            var e_stamp = stamp + 10;
-            for (var s_stamp; s_stamp <= e_stamp; s_stamp++) {
-                //console.log(s_stamp);
-                if (data[s_stamp] && !data[s_stamp].cpu) {
-                    data[s_stamp].cpu = cpuData[i].cpu;
-                    data[s_stamp].mem = cpuData[i].mem;
-                }
-            }
+				
+                var start = (stamps[s].start - startTime) / 1000.0;
+				// find which bucket to drop this in, yeah, x^3
+				for (var j in cpuData) {
+					if ((cpuData[j].offset + .1) > start) {
+						if (!cpuData[j].methods) cpuData[j].methods = [];
+						cpuData[j].methods.push(i);
+						break;
+					}
+				}
+			}
         }
         //console.log(report);
         //console.log(data);
         var r = document.getElementById('results');
         r.innerHTML = '';
         var str = '<table border="1" width="50%" cellpadding="2" cellspacing="2">';
-        str += '<tr><th>Method calls</th><th>CPU</th><th>Memory</th></tr>';
+        str += '<tr><th>offset</th><th>cpu</th><th>memory</th><th># of calls</th></tr>';
 
-        for (var i in data) {
-            str += '<tr><td>' + data[i].methods.length + '</td><td>' + data[i].cpu + '</td><td>' + data[i].mem + '</td></tr>';
+        for (var i in cpuData) {
+			console.log(i);
+			console.log(cpuData[i]);
+            str += '<tr><td>' + cpuData[i].offset +'</td><td>'
+				+ cpuData[i].cpu + '</td><td>' + cpuData[i].mem + '</td><td>'
+				+ (cpuData[i].methods ? cpuData[i].methods.length : 0) + '</td></tr>';
         }
 
         str += '</table>';
