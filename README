@@ -7,35 +7,15 @@ interval. When sampling at intervals, at most 1,000 samples are taken. If you pr
 after every sample is taken. If no callback is provided, all samples are stored in an array and returned after start() completes or stop()
 is called.
 
-The sample object is a map with the following keys (most values are floats):
-
-* [sample] - the sample number (1-1,000)
-* [time]   - the string representation of the time the sample was taken
-* [sys]    - the percentage CPU "sys" processes are using
-* [user]   - the percentage CPU "user" processes are using
-* [ffxcpu] - the percentage CPU Firefox is using, or -1.0 if it is not running
-* [ffxmem] - the amout of memory Firefox is using, or -1.0 if it is not running
-* [safcpu] - the percentage CPU Safari is using, or -1.0 if it is not running
-* [safmem] - the amout of memory Safari is using, or -1.0 if it is not running
-
-
-Sample of data:
-------------------------------------------------------------
-Sample #      : 70
-Time          : Sat Dec 13 00:36:45 -0800 2008
-System CPU    : 4
-User CPU      : 7
-Firefox CPU   : 0
-Firefox Memory: 78413800
-Safari CPU    : 2.8
-Safari Memory : 32768000
-------------------------------------------------------------
-
 Right now it's a hack, no, a kludge that's brittle, ugly and smells bad.
-It's osx/ffx only.
+It's osx only.
 
-How to get the service installed see the README.txt in:
-src/service/README.txt
+How to get the service installed:
+
+    cd src/native_service/
+    make
+
+Now visit the html files under the tests directory
 
 
 [1] http://developer.yahoo.com/browserplus
